@@ -1,0 +1,4 @@
+I chose this commit:
+https://github.com/electron-react-boilerplate/electron-react-boilerplate/commit/8d3efc1426e91bae90e85b829ca338b14f61be03
+
+because currently it's the most recent commit that passes all 5 GitHub Actions tests.
