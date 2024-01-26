@@ -4,7 +4,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # Define the path to the protobuf compiler executable relative to the script's location
-PROTOC="$SCRIPT_DIR/precompiled/protobuf_compiler/protoc-25.2-linux-x86_64/bin/protoc"
+PROTOC="$SCRIPT_DIR/precompiled/protobuf_compiler/protoc-25.2/bin/protoc"
 
 # Export the PROTOC environment variable
 export PROTOC
