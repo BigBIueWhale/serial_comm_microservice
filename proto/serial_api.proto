@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package calculator;
+
+service Calculator {
+  rpc CalcTangent(TangentRequest) returns (TangentResponse);
+}
+
+message TangentRequest {
+  double number = 1;
+}
+
+message TangentResponse {
+  oneof result {
+    double value = 1;
+    string error = 2;
+  }
+}
