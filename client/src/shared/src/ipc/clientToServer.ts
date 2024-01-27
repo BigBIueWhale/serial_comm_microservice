@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Define Zod schemas for each API call
 const ListSerialPortsRequest = z.object({});
 
-const ListSerialPortsResponse = z.string();
+const ListSerialPortsResponse = z.array(z.string());
 
 const OpenPortRequest = z.object({
   port: z.string(),
