@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import { invokeRpc } from '../rpc/invokeRpc';
 import { SERIAL_PORT_HANDLE_UNINITIALIZED, SerialPortHandle } from 'shared/src/ipc/clientToServer';
@@ -9,7 +9,6 @@ export function SerialCommPage() {
     const [incomingDataAnsi, setIncomingDataAnsi] = useState('');
     const [incomingDataHex, setIncomingDataHex] = useState('');
     const [sendingData, setSendingData] = useState('');
-    const [isConnected, setIsConnected] = useState(false);
     const [availablePorts, setAvailablePorts] = useState<string[]>([]);
     const [serialPort, setSerialPort] = useState('');
     const [baudRate, setBaudRate] = useState('');
@@ -17,7 +16,15 @@ export function SerialCommPage() {
     // Handle to the open serial port
     const [handle, setHandle] = useState<z.infer<typeof SerialPortHandle>>(SERIAL_PORT_HANDLE_UNINITIALIZED);
 
-    useEffect(); // To get available serial ports.
+    // Runs on mount
+    useEffect(() => {
+        invokeRpc('ipc-listSerialPorts', {}).then((result) => {
+            setAvailablePorts(result);
+        }).catch((reason) => {
+            // TODO: Error toast here
+            console.log(`Failed to list serial ports: ${reason}`);
+        });
+    }, [setAvailablePorts]);
 
     const handleClear = () => {
         setIncomingDataAnsi('');
@@ -58,14 +65,14 @@ export function SerialCommPage() {
                     baudRate: Number.parseInt(baudRate)
                 }
             }));
-            // Reaches here only if succeeded
-            setIsConnected(true);
         }
         catch (ex) {
             // TODO: Error toast here
             console.log(`Error opening port: ${handle}. ${ex}`);
         }
     };
+
+    const isConnected = handle !== SERIAL_PORT_HANDLE_UNINITIALIZED;
 
     return (
         <Box sx={{ padding: 2, backgroundColor: '#f5f5f5' }}>
@@ -130,6 +137,8 @@ export function SerialCommPage() {
                         {/* Placeholder for serial ports */}
                         <MenuItem value="COM1">COM1</MenuItem>
                         <MenuItem value="COM2">COM2</MenuItem>
+                        {availablePorts.map((item) =>
+                            <MenuItem key={item} value={item}>{item}</MenuItem>)}
                         {/* Add more ports here */}
                     </Select>
                 </FormControl>
