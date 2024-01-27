@@ -12,6 +12,7 @@ export async function invokeRpc<K extends keyof Api>(
     // Validate the request using Zod schema
     const validatedArg = apiSchemas[channel].request.parse(arg);
 
+    // The invoke function is defined in preload.ts
     const result = await window.electron.ipcRenderer.invoke(channel, superjson.stringify(validatedArg));
     const parsedResult = superjson.parse(result);
 

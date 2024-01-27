@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
 import { Box, TextField, Button, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { invokeRpc } from '../rpc/invokeRpc';
+import { SERIAL_PORT_HANDLE_UNINITIALIZED, SerialPortHandle } from 'shared/src/ipc/clientToServer';
+import { z } from 'zod';
+import { stringToAsciiUint8Array } from '../utils/stringToAsciiArray';
 
 export function SerialCommPage() {
     const [incomingDataAnsi, setIncomingDataAnsi] = useState('');
     const [incomingDataHex, setIncomingDataHex] = useState('');
     const [sendingData, setSendingData] = useState('');
     const [isConnected, setIsConnected] = useState(false);
+    const [availablePorts, setAvailablePorts] = useState<string[]>([]);
     const [serialPort, setSerialPort] = useState('');
     const [baudRate, setBaudRate] = useState('');
+
+    // Handle to the open serial port
+    const [handle, setHandle] = useState<z.infer<typeof SerialPortHandle>>(SERIAL_PORT_HANDLE_UNINITIALIZED);
+
+    useEffect(); // To get available serial ports.
 
     const handleClear = () => {
         setIncomingDataAnsi('');
@@ -15,17 +25,46 @@ export function SerialCommPage() {
     };
 
     const handleSend = async () => {
-        // Placeholder for sending data
-
-        // This function is defined in preload.ts
-        const result: string = await window.electron.ipcRenderer.invoke('ipc-example1', sendingData);
-        setSendingData("");
-        setIncomingDataAnsi((prev) => prev + result);
+        try {
+            await invokeRpc('ipc-write', {
+                handle: handle,
+                data: stringToAsciiUint8Array(sendingData),
+            });
+            // Only clear if there was no error
+            setSendingData("");
+        }
+        catch (ex) {
+            // TODO: Error toast here
+            console.log(`Error writing to port: ${handle}. ${ex}`);
+        }
     };
 
-    const handleConnect = () => {
-        setIsConnected(true);
-        // Placeholder for connecting to serial port
+    const handleConnect = async () => {
+        // First close existing handle and set it to uninitialized
+        setHandle((prev) => {
+            if (prev !== SERIAL_PORT_HANDLE_UNINITIALIZED) {
+                invokeRpc('ipc-closePort', { handle: prev }).catch((reason) => {
+                    // TODO: Error toast here
+                    console.log(`Error closing port: ${reason}`);
+                });
+            }
+            return SERIAL_PORT_HANDLE_UNINITIALIZED;
+        });
+        // Then try opening the new port
+        try {
+            setHandle(await invokeRpc('ipc-openPort', {
+                port: serialPort,
+                settings: {
+                    baudRate: Number.parseInt(baudRate)
+                }
+            }));
+            // Reaches here only if succeeded
+            setIsConnected(true);
+        }
+        catch (ex) {
+            // TODO: Error toast here
+            console.log(`Error opening port: ${handle}. ${ex}`);
+        }
     };
 
     return (

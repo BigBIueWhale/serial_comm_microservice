@@ -1,51 +1,57 @@
 import { z } from 'zod';
 
 // Define Zod schemas for each API call
-const ListSerialPortsRequest = z.object({});
+export const ListSerialPortsRequest = z.object({});
 
-const ListSerialPortsResponse = z.array(z.string());
+export const ListSerialPortsResponse = z.array(z.string());
 
-const OpenPortRequest = z.object({
+// Positive because the value 0 is an uninitialized handle
+export const SerialPortHandle = z.number().int().positive();
+export const SERIAL_PORT_HANDLE_UNINITIALIZED: z.infer<typeof SerialPortHandle> = 0;
+
+export const OpenPortRequest = z.object({
   port: z.string(),
   settings: z.object({
-    baudRate: z.number(),
+    baudRate: z.number().int().positive(),
     // Add other serial port settings here as needed
   }),
 });
 
-const OpenPortResponse = z.number();
+export const OpenPortResponse = SerialPortHandle;
 
-const ClosePortRequest = z.object({
-  handle: z.number(),
+export const ClosePortRequest = z.object({
+  handle: SerialPortHandle,
 });
 
-const ClosePortResponse = z.void();
+export const ClosePortResponse = z.void();
 
-const StartReadingRequest = z.object({
-  handle: z.number(),
+export const StartReadingRequest = z.object({
+  handle: SerialPortHandle,
 });
 
-const StartReadingResponse = z.void();
+export const StartReadingResponse = z.void();
 
-const StopReadingRequest = z.object({
-  handle: z.number(),
+export const StopReadingRequest = z.object({
+  handle: SerialPortHandle,
 });
 
-const StopReadingResponse = z.void();
+export const StopReadingResponse = z.void();
 
-const WriteRequest = z.object({
-  handle: z.number(),
+export const WriteRequest = z.object({
+  handle: SerialPortHandle,
   data: z.instanceof(Uint8Array),
 });
 
-const WriteResponse = z.void();
+export const WriteResponse = z.void();
 
-const ReadRequest = z.object({
-  handle: z.number(),
-  timeout: z.number(),
+export const ReadRequest = z.object({
+  handle: SerialPortHandle,
+  // Value 0 is return immediately,
+  // super high value will wait forever (for all intents and purposes).
+  timeoutNanoseconds: z.number().int().nonnegative(),
 });
 
-const ReadResponse = z.instanceof(Uint8Array);
+export const ReadResponse = z.instanceof(Uint8Array);
 
 // Define the API using Zod schemas
 export const apiSchemas = {
