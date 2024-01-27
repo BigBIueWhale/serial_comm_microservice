@@ -14,8 +14,13 @@ export function SerialCommPage() {
         setIncomingDataHex('');
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
         // Placeholder for sending data
+
+        // This function is defined in preload.ts
+        const result: string = await window.electron.ipcRenderer.invoke('ipc-example1', sendingData);
+        setSendingData("");
+        setIncomingDataAnsi((prev) => prev + result);
     };
 
     const handleConnect = () => {
