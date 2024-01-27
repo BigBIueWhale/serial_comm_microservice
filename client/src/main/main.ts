@@ -90,7 +90,7 @@ const createWindow = async () => {
     const myApp = new MyApp();
     myApp.setupEventHandlers();
     mainWindow.on('closed', () => {
-      myApp.removeEventHandlers();
+      myApp.onAppClosing();
     });
   });
 
