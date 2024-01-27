@@ -16,17 +16,25 @@ const Example2Response = z.object({
   total: z.number(),
 });
 
-// Define the API using Zod schemas
-export interface Api {
+// Define the API using Zod schemas directly
+export const apiSchemas = {
   'ipc-example1': {
-    request: z.infer<typeof Example1Request>;
-    response: z.infer<typeof Example1Response>;
-  };
+    request: Example1Request,
+    response: Example1Response,
+  },
   'ipc-example2': {
-    request: z.infer<typeof Example2Request>;
-    response: z.infer<typeof Example2Response>;
+    request: Example2Request,
+    response: Example2Response,
+  },
+};
+
+// Infer types from Zod schemas
+export type Api = {
+  [K in keyof typeof apiSchemas]: {
+    request: z.infer<typeof apiSchemas[K]['request']>;
+    response: z.infer<typeof apiSchemas[K]['response']>;
   };
-}
+};
 
 // Define Channels type for preload.ts
 export type ChannelsClientToServer = keyof Api;
