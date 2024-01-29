@@ -134,12 +134,8 @@ export function SerialCommPage() {
                         onChange={(e) => setSerialPort(e.target.value)}
                         style={{ backgroundColor: '#ffffff' }}
                     >
-                        {/* Placeholder for serial ports */}
-                        <MenuItem value="COM1">COM1</MenuItem>
-                        <MenuItem value="COM2">COM2</MenuItem>
                         {availablePorts.map((item) =>
                             <MenuItem key={item} value={item}>{item}</MenuItem>)}
-                        {/* Add more ports here */}
                     </Select>
                 </FormControl>
 
