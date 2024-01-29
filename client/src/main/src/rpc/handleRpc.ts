@@ -4,7 +4,7 @@
 // .invokeRpc with the specified channel name string.
 
 import { Api, apiSchemas } from '../../../shared/src/ipc/clientToServer';
-import superjson from 'superjson';
+import superjson from "superjson";
 import { ipcMain } from 'electron';
 
 export async function handleRpc<K extends keyof Api>(
