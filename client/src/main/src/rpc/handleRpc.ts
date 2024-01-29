@@ -3,7 +3,7 @@
 // a handler that'll be triggered when the `renderer` uses
 // .invokeRpc with the specified channel name string.
 
-import { Api, apiSchemas } from "shared/src/ipc/clientToServer";
+import { Api, apiSchemas } from '../../../shared/src/ipc/clientToServer';
 import superjson from 'superjson';
 import { ipcMain } from 'electron';
 
