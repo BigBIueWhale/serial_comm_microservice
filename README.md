@@ -7,7 +7,7 @@ In other words: serialport library is buggy when using with Electron (at least f
 
 My idea was: let's just do it in Rust, and call the Rust functions via the `main` electron process!
 
-In order to call functions cross programming language, you need a way to serialize / deserialize the types, and generate types for each of the involved programing languages.
+In order to call functions cross programming language, you need a way to serialize / deserialize the data types, and generate types for each of the involved programing languages.
 
 Protobuf can be used for that, and gRPC is based on protobuf.
 
