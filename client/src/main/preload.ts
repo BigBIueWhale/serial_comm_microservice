@@ -8,6 +8,8 @@ const electronHandler = {
     invoke(channel: ChannelsClientToServer, arg: string): Promise<string> {
       return ipcRenderer.invoke(channel, arg);
     },
+    // TODO: Create an "on" function here that allows the 'renderer' to handle
+    // events invoked by 'main'.
   },
 };
 
