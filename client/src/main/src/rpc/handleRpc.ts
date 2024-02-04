@@ -3,13 +3,13 @@
 // a handler that'll be triggered when the `renderer` uses
 // .invokeRpc with the specified channel name string.
 
-import { Api, apiSchemas } from '../../../shared/src/ipc/clientToServer';
+import { ApiClientToServer, apiSchemas } from '../../../shared/src/ipc/clientToServer';
 import superjson from "superjson";
 import { ipcMain } from 'electron';
 
-export async function handleRpc<K extends keyof Api>(
+export async function handleRpc<K extends keyof ApiClientToServer>(
     channel: K,
-    handler: (arg: Api[K]['request']) => Promise<Api[K]['response']>
+    handler: (arg: ApiClientToServer[K]['request']) => Promise<ApiClientToServer[K]['response']>
   ) {
     ipcMain.handle(channel, async (_, arg) => {
       const deserializedArg = superjson.parse(arg);

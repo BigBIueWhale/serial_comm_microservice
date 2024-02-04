@@ -2,14 +2,19 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer } from 'electron';
 import { ChannelsClientToServer } from 'shared/src/ipc/clientToServer';
+import { ChannelsServerToClient } from "shared/src/ipc/serverToClient";
 
 const electronHandler = {
   ipcRenderer: {
     invoke(channel: ChannelsClientToServer, arg: string): Promise<string> {
       return ipcRenderer.invoke(channel, arg);
     },
-    // TODO: Create an "on" function here that allows the 'renderer' to handle
-    // events invoked by 'main'.
+    onNotification(channel: ChannelsServerToClient, func: (event: Electron.IpcRendererEvent, ...args: any[]) => void) {
+      ipcRenderer.on(channel, func);
+    },
+    offNotification(channel: ChannelsServerToClient, func: (event: Electron.IpcRendererEvent, ...args: any[]) => void) {
+      ipcRenderer.on(channel, func);
+    },
   },
 };
 

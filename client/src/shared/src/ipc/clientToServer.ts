@@ -86,7 +86,7 @@ export const apiSchemas = {
 };
 
 // Infer types from Zod schemas
-export type Api = {
+export type ApiClientToServer = {
   [K in keyof typeof apiSchemas]: {
     request: z.infer<typeof apiSchemas[K]['request']>;
     response: z.infer<typeof apiSchemas[K]['response']>;
@@ -94,4 +94,4 @@ export type Api = {
 };
 
 // Define Channels type for preload.ts
-export type ChannelsClientToServer = keyof Api;
+export type ChannelsClientToServer = keyof ApiClientToServer;
