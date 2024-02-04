@@ -12,9 +12,6 @@ const electronHandler = {
     onNotification(channel: ChannelsServerToClient, func: (event: Electron.IpcRendererEvent, ...args: any[]) => void) {
       ipcRenderer.on(channel, func);
     },
-    offNotification(channel: ChannelsServerToClient, func: (event: Electron.IpcRendererEvent, ...args: any[]) => void) {
-      ipcRenderer.on(channel, func);
-    },
   },
 };
 
