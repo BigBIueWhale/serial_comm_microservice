@@ -5,9 +5,8 @@ export const ListSerialPortsRequest = z.object({});
 
 export const ListSerialPortsResponse = z.array(z.string());
 
-// Positive because the value 0 is an uninitialized handle
-export const SerialPortHandle = z.number().int().positive();
-export const SERIAL_PORT_HANDLE_UNINITIALIZED: z.infer<typeof SerialPortHandle> = 0;
+export const SerialPortHandle = z.string();
+export const SERIAL_PORT_HANDLE_UNINITIALIZED: z.infer<typeof SerialPortHandle> = "";
 
 export const OpenPortRequest = z.object({
   port: z.string(),
