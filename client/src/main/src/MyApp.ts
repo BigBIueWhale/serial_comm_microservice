@@ -2,6 +2,8 @@ import { SERIAL_PORT_HANDLE_UNINITIALIZED } from "shared/src/ipc/clientToServer"
 import { handleRpc } from "./rpc/handleRpc";
 import { sleepNodejs } from "./utils/sleep.util";
 import { v4 as uuidv4 } from 'uuid';
+import { invokeRpc } from "./rpc/invokeRpc";
+import { createHash } from 'crypto';
 
 // This is mock state management for a handle.
 // When using the real Rust implementation, the state behind
@@ -55,14 +57,36 @@ export class MyApp {
             if (val.read_interval_id !== null) {
                 throw new Error(`Tried to start reading more than once without calling stopReading. Handle: ${request.handle}`);
             }
-            // Send the front-end via .emit a bunch of data every so often
-            // until they call ipc-stopReading. That will be to test the the IPC
-            // communication between main and renderer works correctly, both ways.
+            const handleCopy = request.handle;
+            const readCount = { value: 0 }; // Mutable object to track the number of reads
+        
             val.read_interval_id = setInterval(() => {
-                // TODO: Send a dummy byte array, as if some bytes were read from the serial port.
+                readCount.value++;
+                if (readCount.value <= 9) {
+                    // Use SHA-512 of readCount to generate deterministic random data
+                    const hash = createHash('sha512').update(String(readCount.value)).digest('hex');
+                    const dataSize = parseInt(hash.substring(0, 2), 16) % 11; // Deterministic size [0, 10] based on hash
+                    // Use that same random-deterministic hash to generate the random data for the array.
+                    const data = Array.from({length: dataSize}, (_, i) => parseInt(hash.substring(i*2, i*2 + 2), 16) % 256);
+                    invokeRpc('notify-serialDataReceived', {
+                        handle: handleCopy,
+                        data: new Uint8Array(data), // Convert to Uint8Array
+                    });
+                } else {
+                    // Simulate serial port error
+                    invokeRpc('notify-serialError', {
+                        handle: handleCopy,
+                        error: "Serial port disconnected",
+                    });
+                    if (val.read_interval_id !== null) {
+                        clearInterval(val.read_interval_id); // Stop the interval
+                    }
+                    val.read_interval_id = null; // Reset the read interval ID
+                    void this.mock_handles.delete(request.handle); // Close the serial port upon read error
+                }
             }, 2_000);
             // No response needed for start reading
-        });
+        });        
 
         handleRpc('ipc-stopReading', async (request) => {
             await sleepNodejs(500);
