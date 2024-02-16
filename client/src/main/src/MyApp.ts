@@ -3,8 +3,11 @@ import { handleRpc } from "./rpc/handleRpc";
 import { sleepNodejs } from "./utils/sleep.util";
 import { v4 as uuidv4 } from 'uuid';
 
+// This is mock state management for a handle.
+// When using the real Rust implementation, the state behind
+// the handle will be opaque to this Node.JS code.
 type Handle = {
-    isReading: boolean;
+    read_interval_id: NodeJS.Timeout | null;
 };
 
 export class MyApp {
@@ -16,22 +19,26 @@ export class MyApp {
     // TODO: Call the Rust gRPC microservice to perform actual serial communication.
     public setupEventHandlers(): void {
         handleRpc('ipc-listSerialPorts', async () => {
-            await sleepNodejs(2000);
+            await sleepNodejs(2_000);
             return ["COM3", "COM4"];
         });
 
         handleRpc('ipc-openPort', async (request) => {
-            await sleepNodejs(1000);
+            await sleepNodejs(1_000);
             // Mock a handle ID
             const mock_handle_id = uuidv4();
-            this.mock_handles.set(mock_handle_id, { isReading: false });
+            this.mock_handles.set(mock_handle_id, {
+                read_interval_id: null,
+            });
             return mock_handle_id;
         });
 
         handleRpc('ipc-closePort', async (request) => {
             await sleepNodejs(500);
             if (request.handle === SERIAL_PORT_HANDLE_UNINITIALIZED) {
-                return; // Same as "delete nullptr" which is a valid statement.
+                // Not an error.
+                // Same as "delete nullptr" which is a valid statement.
+                return;
             }
             if (this.mock_handles.delete(request.handle) === false) {
                 throw new Error(`Tried to close invalid handle: ${request.handle}`);
@@ -45,13 +52,15 @@ export class MyApp {
             if (val === undefined) {
                 throw new Error(`Tried to start reading from invalid handle: ${request.handle}`);
             }
-            if (val.isReading === true) {
+            if (val.read_interval_id !== null) {
                 throw new Error(`Tried to start reading more than once without calling stopReading. Handle: ${request.handle}`);
             }
-            // TODO: Send the front-end via .emit a bunch of data every so often
+            // Send the front-end via .emit a bunch of data every so often
             // until they call ipc-stopReading. That will be to test the the IPC
             // communication between main and renderer works correctly, both ways.
-            val.isReading = true;
+            val.read_interval_id = setInterval(() => {
+                // TODO: Send a dummy byte array, as if some bytes were read from the serial port.
+            }, 2_000);
             // No response needed for start reading
         });
 
@@ -61,11 +70,13 @@ export class MyApp {
             if (val === undefined) {
                 throw new Error(`Tried to stop reading from invalid handle: ${request.handle}`);
             }
-            if (val.isReading === false) {
-                throw new Error(`Tried to stop reading even though we weren't reading. Handle: ${request.handle}`);
+            if (val.read_interval_id === null) {
+                // Not an error.
+                // Same as calling clearInterval twice on a NodeJS.Timeout object.
+                return;
             }
-            val.isReading = false;
-            // No response needed for stop reading
+            clearInterval(val.read_interval_id);
+            val.read_interval_id = null;
         });
 
         handleRpc('ipc-write', async (request) => {
@@ -77,7 +88,7 @@ export class MyApp {
         });
 
         handleRpc('ipc-read', async (request) => {
-            await sleepNodejs(1000);
+            await sleepNodejs(1_000);
             if (!this.mock_handles.has(request.handle)) {
                 throw new Error(`Tried to read from invalid handle: ${request.handle}`);
             }
