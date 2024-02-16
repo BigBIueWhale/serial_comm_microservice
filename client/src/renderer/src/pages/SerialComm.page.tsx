@@ -1,13 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useMemo} from 'react';
 import { Box, TextField, Button, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import { invokeRpc } from '../rpc/invokeRpc';
-import { SERIAL_PORT_HANDLE_UNINITIALIZED, SerialPortHandle } from 'shared/src/ipc/clientToServer';
+import { SerialDataReceivedNotification, SerialErrorNotification } from "../../../shared/src/ipc/serverToClient"
+import { SERIAL_PORT_HANDLE_UNINITIALIZED, SerialPortHandle } from '../../../shared/src/ipc/clientToServer';
 import { z } from 'zod';
 import { stringToAsciiUint8Array } from '../utils/stringToAsciiArray';
+import { offNotification, onNotification } from '../rpc/handleNotification';
 
 export function SerialCommPage() {
-    const [incomingDataAnsi, setIncomingDataAnsi] = useState('');
-    const [incomingDataHex, setIncomingDataHex] = useState('');
+    const [incomingDataBytes, setIncomingBytes] = useState(new Uint8Array([]));
+
+    const incomingDataHex = useMemo((): string => {
+        return Array.from(incomingDataBytes)
+            .map(byte => byte.toString(16).padStart(2, '0').toUpperCase())
+            .join(' ');
+    }, [incomingDataBytes]);
+
+    const incomingDataAnsi = useMemo((): string => {
+        // For a more accurate ANSI representation, you might need a specific mapping or conversion.
+        // This is a simplified version that treats the bytes as ISO-8859-1 (Latin1), which shares
+        // the 0x00-0xFF range with Windows-1252 but lacks some of the special characters.
+        // A comprehensive solution might involve mapping specific Windows-1252 characters.
+        const decoder = new TextDecoder('iso-8859-1');
+        return decoder.decode(incomingDataBytes);
+    }, [incomingDataBytes]);
+
     const [sendingData, setSendingData] = useState('');
     const [availablePorts, setAvailablePorts] = useState<string[]>([]);
     const [serialPort, setSerialPort] = useState('');
@@ -26,9 +43,35 @@ export function SerialCommPage() {
         });
     }, [setAvailablePorts]);
 
+    // Runs on mount
+    useEffect(() => {
+        const onError = (val: z.infer<typeof SerialErrorNotification>) => {
+            // TODO: Error toast here
+            console.log(`Error from handle: ${val}. Message: ${val.error}`);
+        };
+        const onDataReceived = (val: z.infer<typeof SerialDataReceivedNotification>) => {
+            const newData = val.data;
+            setIncomingBytes(prev => {
+                // Create a new Uint8Array with a length that is the sum of the previous array and the new data
+                const updatedArray = new Uint8Array(prev.length + newData.length);
+                // Copy the contents of the previous array into the start of the updated array
+                updatedArray.set(prev);
+                // Copy the contents of the new data array into the updated array, starting at the position after the last element of the previous array
+                updatedArray.set(newData, prev.length);
+
+                return updatedArray;
+            });
+        };
+        onNotification('notify-serialError', onError);
+        onNotification('notify-serialDataReceived', onDataReceived);
+        return () => {
+            offNotification('notify-serialError', onError);
+            offNotification('notify-serialDataReceived', onDataReceived);
+        };
+    }, []);
+
     const handleClear = () => {
-        setIncomingDataAnsi('');
-        setIncomingDataHex('');
+        setIncomingBytes(new Uint8Array([]));
     };
 
     const handleSend = async () => {

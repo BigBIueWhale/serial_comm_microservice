@@ -1,4 +1,4 @@
-import { SERIAL_PORT_HANDLE_UNINITIALIZED } from "shared/src/ipc/clientToServer";
+import { SERIAL_PORT_HANDLE_UNINITIALIZED } from "../../shared/src/ipc/clientToServer";
 import { handleRpc } from "./rpc/handleRpc";
 import { sleepNodejs } from "./utils/sleep.util";
 import { v4 as uuidv4 } from 'uuid';
