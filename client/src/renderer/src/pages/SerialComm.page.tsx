@@ -63,6 +63,16 @@ function SerialCommPageImpl() {
     const [serialPort, setSerialPort] = useState('');
     const [baudRate, setBaudRate] = useState('');
 
+    // For animation of new data received
+    const [dataReceived, setDataReceived] = useState<boolean>(false);
+    useEffect(() => {
+        if (dataReceived) {
+            const timer = setTimeout(() => setDataReceived(false), 500); // Reset after 500ms
+            return () => clearTimeout(timer);
+        }
+    }, [dataReceived]);
+    
+
     // Handle to the open serial port
     const [handle, setHandle] = useState<z.infer<typeof SerialPortHandle>>(SERIAL_PORT_HANDLE_UNINITIALIZED);
     
@@ -94,6 +104,7 @@ function SerialCommPageImpl() {
 
                 return updatedArray;
             });
+            setDataReceived(true); // Set dataReceived to true to trigger the flash effect
         };
         onNotification('notify-serialError', onError);
         onNotification('notify-serialDataReceived', onDataReceived);
@@ -181,6 +192,7 @@ function SerialCommPageImpl() {
 
             <Box sx={{ display: 'flex', gap: 2, marginBottom: 2 }}>
                 <TextField
+                    className={dataReceived ? 'flash-effect' : ''}
                     label="Incoming Data (ANSI)"
                     multiline
                     rows={4}
@@ -193,6 +205,7 @@ function SerialCommPageImpl() {
                     style={{ backgroundColor: '#ffffff' }}
                 />
                 <TextField
+                    className={dataReceived ? 'flash-effect' : ''}
                     label="Incoming Data (Hex)"
                     multiline
                     rows={4}

@@ -1,0 +1,12 @@
+@keyframes flashAnimation {
+  from {
+    background-color: #ffff99;
+  }
+  to {
+    background-color: #ffffff;
+  }
+}
+
+.flash-effect {
+  animation: flashAnimation 0.5s;
+}
