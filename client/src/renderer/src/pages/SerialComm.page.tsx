@@ -122,34 +122,55 @@ function SerialCommPageImpl() {
         }
     };
 
-    const handleConnect = async () => {
-        // First close existing handle and set it to uninitialized
+    const handleDisconnect = async () => {
+        // Close existing handle and set it to uninitialized
         setHandle((prev) => {
             if (prev !== SERIAL_PORT_HANDLE_UNINITIALIZED) {
                 invokeRpc('ipc-closePort', { handle: prev }).catch((reason) => {
                     // TODO: Error toast here
                     console.log(`Error closing port: ${reason}`);
                 });
+                return SERIAL_PORT_HANDLE_UNINITIALIZED;
             }
-            return SERIAL_PORT_HANDLE_UNINITIALIZED;
+            else {
+                return prev; // Use must have pressed twice on the disconnect button
+            }
         });
-        // Then try opening the new port and start listening
-        try {
-            const newHandle = await invokeRpc('ipc-openPort', {
-                port: serialPort,
-                settings: {
-                    baudRate: Number.parseInt(baudRate)
-                }
-            });
-            setHandle(newHandle);
-            await invokeRpc('ipc-startReading', {
-                handle: newHandle,
-            });
-        }
-        catch (ex) {
-            // TODO: Error toast here
-            console.log(`Error opening port: ${handle}. ${ex}`);
-        }
+    };
+
+    const [inProcessOfOpeningPort, setInProcessOfOpeningPort] = useState<boolean>(false);
+
+    const handleConnect = () => {
+        const openPortAndStartListening = async () => {
+          // Try opening the new port and start listening
+          try {
+              const newHandle = await invokeRpc('ipc-openPort', {
+                  port: serialPort,
+                  settings: {
+                      baudRate: Number.parseInt(baudRate)
+                  }
+              });
+              setHandle(newHandle);
+              await invokeRpc('ipc-startReading', {
+                  handle: newHandle,
+              });
+          }
+          catch (ex) {
+              // TODO: Error toast here
+              console.log(`Error opening port: ${handle}. ${ex}`);
+          }
+          setInProcessOfOpeningPort(false);
+        };
+
+        setInProcessOfOpeningPort((prev) => {
+            if (prev === true) {
+                // Probably user pressed connect twice fast
+            }
+            else {
+                openPortAndStartListening();
+            }
+            return true;
+        });
     };
 
     const isConnected = handle !== SERIAL_PORT_HANDLE_UNINITIALIZED;
@@ -205,7 +226,10 @@ function SerialCommPageImpl() {
 
             <Box sx={{ marginTop: 4, padding: 2, border: '1px solid #3f51b5', borderRadius: '4px' }}>
                 <h2 style={{ color: '#3f51b5' }}>Serial Connection</h2>
-                <FormControl fullWidth style={{ marginBottom: 2 }}>
+                <FormControl
+                    fullWidth
+                    style={{ marginBottom: 2 }}
+                    disabled={isConnected}>
                     <InputLabel id="serial-port-label">Serial Port</InputLabel>
                     <Select
                         labelId="serial-port-label"
@@ -219,7 +243,9 @@ function SerialCommPageImpl() {
                     </Select>
                 </FormControl>
 
-                <FormControl fullWidth>
+                <FormControl
+                  fullWidth
+                  disabled={isConnected}>
                     <InputLabel id="baud-rate-label">Baud Rate</InputLabel>
                     <Select
                         labelId="baud-rate-label"
@@ -234,10 +260,15 @@ function SerialCommPageImpl() {
                         {/* Add more baud rates here */}
                     </Select>
                 </FormControl>
-
-                <Button variant="contained" color="primary" onClick={handleConnect} style={{ marginTop: 2 }}>
-                    Connect
-                </Button>
+                {
+                    isConnected ?
+                    <Button variant="contained" color="primary" onClick={handleDisconnect} style={{ marginTop: 2 }}>
+                      Disconnect
+                    </Button> :
+                    <Button variant="contained" color="primary" onClick={handleConnect} style={{ marginTop: 2 }}>
+                      Connect
+                    </Button> 
+                }
             </Box>
         </Box>
     );
