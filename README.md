@@ -15,7 +15,7 @@ The .proto file defines the API and protoc (Protobuf Compiler) then generates ty
 
 ## Components
 * executable- Rust microservice server listening on Ipv6 IP+PORT `[::1]:50051` HTTP/2 (because that's the default in gRPC, it's for communicating between servers). Ready to execute any serial API function that the client has in mind.
-* client- example usage of the microservice. In our case it's an Electron React TypeScript app and the backend of the app (the `main`) uses the gRPC API.
+* client- example usage of the microservice. See `client/README.md`.
 
 ## WIP
 The project is not finished yet:
