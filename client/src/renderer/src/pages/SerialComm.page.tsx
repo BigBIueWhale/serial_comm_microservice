@@ -100,14 +100,18 @@ export function SerialCommPage() {
             }
             return SERIAL_PORT_HANDLE_UNINITIALIZED;
         });
-        // Then try opening the new port
+        // Then try opening the new port and start listening
         try {
-            setHandle(await invokeRpc('ipc-openPort', {
+            const newHandle = await invokeRpc('ipc-openPort', {
                 port: serialPort,
                 settings: {
                     baudRate: Number.parseInt(baudRate)
                 }
-            }));
+            });
+            await invokeRpc('ipc-startReading', {
+                handle: newHandle,
+            });
+            setHandle(newHandle);
         }
         catch (ex) {
             // TODO: Error toast here

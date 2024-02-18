@@ -12,9 +12,34 @@ type Handle = {
     read_interval_id: NodeJS.Timeout | null;
 };
 
+function stopReading(val: Handle) {
+    if (val.read_interval_id !== null) {
+        clearInterval(val.read_interval_id); // Stop the interval
+    }
+    else {
+        // Not an error.
+        // Same as calling clearInterval twice on a NodeJS.Timeout object.
+    }
+    val.read_interval_id = null; // Reset the read interval ID
+}
+
+function closePort(mock_handles: Map<string, Handle>, handle: string) {
+    if (handle === SERIAL_PORT_HANDLE_UNINITIALIZED) {
+        // Not an error.
+        // Same as "delete nullptr" which is a valid statement.
+        return;
+    }
+    const val = mock_handles.get(handle);
+    if (val === undefined) {
+        throw new Error(`Tried to close invalid handle (or close same handle twice): ${handle}`);
+    }
+    stopReading(val);
+    void mock_handles.delete(handle);
+}
+
 export class MyApp {
     constructor(
-        private mock_handles: Map<string, Handle>
+        private mock_handles: Map<string, Handle> = new Map(),
     ) {}
 
     // I the meantime I've implemented dummy handlers.
@@ -37,15 +62,7 @@ export class MyApp {
 
         handleRpc('ipc-closePort', async (request) => {
             await sleepNodejs(500);
-            if (request.handle === SERIAL_PORT_HANDLE_UNINITIALIZED) {
-                // Not an error.
-                // Same as "delete nullptr" which is a valid statement.
-                return;
-            }
-            if (this.mock_handles.delete(request.handle) === false) {
-                throw new Error(`Tried to close invalid handle: ${request.handle}`);
-            }
-            // No response needed for close operation
+            closePort(this.mock_handles, request.handle);
         });
 
         handleRpc('ipc-startReading', async (request) => {
@@ -78,11 +95,7 @@ export class MyApp {
                         handle: handleCopy,
                         error: "Serial port disconnected",
                     });
-                    if (val.read_interval_id !== null) {
-                        clearInterval(val.read_interval_id); // Stop the interval
-                    }
-                    val.read_interval_id = null; // Reset the read interval ID
-                    void this.mock_handles.delete(request.handle); // Close the serial port upon read error
+                    closePort(this.mock_handles, handleCopy);
                 }
             }, 2_000);
             // No response needed for start reading
@@ -94,13 +107,7 @@ export class MyApp {
             if (val === undefined) {
                 throw new Error(`Tried to stop reading from invalid handle: ${request.handle}`);
             }
-            if (val.read_interval_id === null) {
-                // Not an error.
-                // Same as calling clearInterval twice on a NodeJS.Timeout object.
-                return;
-            }
-            clearInterval(val.read_interval_id);
-            val.read_interval_id = null;
+            stopReading(val);
         });
 
         handleRpc('ipc-write', async (request) => {
@@ -123,5 +130,6 @@ export class MyApp {
 
     public onAppClosing(): void {
         // Close any resources here
+
     }
 }
