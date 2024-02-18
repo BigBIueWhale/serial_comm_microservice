@@ -43,9 +43,19 @@ export class MyApp {
         private mock_handles: Map<string, Handle> = new Map(),
     ) {}
 
+    closeAllPorts = (): void => {
+        for (const kvp of this.mock_handles) {
+            closePort(this.mock_handles, kvp[0]);
+        }
+    }
+
     // I the meantime I've implemented dummy handlers.
     // TODO: Call the Rust gRPC microservice to perform actual serial communication.
     public setupEventHandlers(browserWindow: BrowserWindow): void {
+        handleRpc('ipc-cleanup', async () => {
+            this.closeAllPorts();
+        });
+
         handleRpc('ipc-listSerialPorts', async () => {
             await sleepNodejs(2_000);
             return ["COM3", "COM4"];
@@ -134,6 +144,7 @@ export class MyApp {
     public onAppClosing(): void {
         // Close any resources here
 
+        removeHandler("ipc-cleanup");
         removeHandler("ipc-listSerialPorts")
         removeHandler("ipc-openPort");
         removeHandler("ipc-closePort");
@@ -142,8 +153,6 @@ export class MyApp {
         removeHandler("ipc-write");
         removeHandler("ipc-read");
 
-        for (const kvp of this.mock_handles) {
-            closePort(this.mock_handles, kvp[0]);
-        }
+        this.closeAllPorts();
     }
 }

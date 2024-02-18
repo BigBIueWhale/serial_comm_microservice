@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
 // Define Zod schemas for each API call
+
+export const CleanupRequest = z.object({});
+export const CleanupResponse = z.void();
+
 export const ListSerialPortsRequest = z.object({});
 
 export const ListSerialPortsResponse = z.array(z.string());
@@ -54,6 +58,10 @@ export const ReadResponse = z.instanceof(Uint8Array);
 
 // Define the API using Zod schemas
 export const apiSchemas = {
+  'ipc-cleanup': {
+    request: CleanupRequest,
+    response: CleanupResponse,
+  },
   'ipc-listSerialPorts': {
     request: ListSerialPortsRequest,
     response: ListSerialPortsResponse,

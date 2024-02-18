@@ -1,5 +1,5 @@
 import React, { useState, useEffect , useMemo} from 'react';
-import { Box, TextField, Button, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { Box, TextField, Button, Select, MenuItem, InputLabel, FormControl, Typography } from '@mui/material';
 import { invokeRpc } from '../rpc/invokeRpc';
 import { SerialDataReceivedNotification, SerialErrorNotification } from "../../../shared/src/ipc/serverToClient"
 import { SERIAL_PORT_HANDLE_UNINITIALIZED, SerialPortHandle } from '../../../shared/src/ipc/clientToServer';
@@ -7,7 +7,40 @@ import { z } from 'zod';
 import { stringToAsciiUint8Array } from '../utils/stringToAsciiArray';
 import { offNotification, onNotification } from '../rpc/handleNotification';
 
-export function SerialCommPage() {
+export const SerialCommPage: React.FC = () => {
+    const [isReady, setIsReady] = useState(false);
+  
+    useEffect(() => {
+      const cleanupAndInitialize = async () => {
+        try {
+          // Cleanup so no ports are left open from previous run.
+          // Will happen if the user reloads the renderer but leaves the main as is.
+          // Since web doesn't support cleanup on close, we'll do cleanup on start!
+
+          // Of course, the backend also cleans up when it closes, so this cleanup
+          // is for the sitations where the renderer refreshed, but the main remembers
+          // last time.
+          await invokeRpc('ipc-cleanup', {});
+          setIsReady(true);
+        } catch (error) {
+          // TODO: Error toast here
+          console.error("Failed to clean up and initialize:", error);
+        }
+      };
+  
+      cleanupAndInitialize();
+    }, []);
+  
+    return isReady ? (
+        <SerialCommPageImpl />
+      ) : (
+        <Typography variant="h6" component="h2">
+          Cleaning up from previous run...
+        </Typography>
+      );
+  };
+
+function SerialCommPageImpl() {
     const [incomingDataBytes, setIncomingBytes] = useState(new Uint8Array([]));
 
     const incomingDataHex = useMemo((): string => {
@@ -32,9 +65,7 @@ export function SerialCommPage() {
 
     // Handle to the open serial port
     const [handle, setHandle] = useState<z.infer<typeof SerialPortHandle>>(SERIAL_PORT_HANDLE_UNINITIALIZED);
-    // TODO: How to close this handle when the component unmounts so that the serial port
-    // doesn't stay open?
-
+    
     // Runs on mount
     useEffect(() => {
         invokeRpc('ipc-listSerialPorts', {}).then((result) => {
