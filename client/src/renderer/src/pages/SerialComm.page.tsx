@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useMemo} from 'react';
+import React, { useState, useEffect ,useMemo, useContext } from 'react';
 import { Box, TextField, Button, Select, MenuItem, InputLabel, FormControl, Typography } from '@mui/material';
 import { invokeRpc } from '../rpc/invokeRpc';
 import { SerialDataReceivedNotification, SerialErrorNotification } from "../../../shared/src/ipc/serverToClient"
@@ -6,8 +6,12 @@ import { SERIAL_PORT_HANDLE_UNINITIALIZED, SerialPortHandle } from '../../../sha
 import { z } from 'zod';
 import { stringToAsciiUint8Array } from '../utils/stringToAsciiArray';
 import { offNotification, onNotification } from '../rpc/handleNotification';
+import { ToastContext, ToastNotifyMode } from '../Context/Toast.context';
+import { v4 as uuidv4 } from 'uuid';
 
 export const SerialCommPage: React.FC = () => {
+    const toastContext = useContext(ToastContext);
+
     const [isReady, setIsReady] = useState(false);
   
     useEffect(() => {
@@ -23,13 +27,15 @@ export const SerialCommPage: React.FC = () => {
           await invokeRpc('ipc-cleanup', {});
           setIsReady(true);
         } catch (error) {
-          // TODO: Error toast here
-          console.error("Failed to clean up and initialize:", error);
+          toastContext.notify(
+            "clean up error",
+            `Failed to clean up and initialize: ${error}`,
+            ToastNotifyMode.ERROR);
         }
       };
   
       cleanupAndInitialize();
-    }, []);
+    }, [toastContext]);
   
     return isReady ? (
         <SerialCommPageImpl />
@@ -41,6 +47,8 @@ export const SerialCommPage: React.FC = () => {
   };
 
 function SerialCommPageImpl() {
+    const toastContext = useContext(ToastContext);
+    
     const [incomingDataBytes, setIncomingBytes] = useState(new Uint8Array([]));
 
     const incomingDataHex = useMemo((): string => {
@@ -81,16 +89,20 @@ function SerialCommPageImpl() {
         invokeRpc('ipc-listSerialPorts', {}).then((result) => {
             setAvailablePorts(result);
         }).catch((reason) => {
-            // TODO: Error toast here
-            console.log(`Failed to list serial ports: ${reason}`);
+            toastContext.notify(
+                "list serial error",
+                `Failed to list serial ports: ${reason}`,
+                ToastNotifyMode.ERROR);
         });
-    }, [setAvailablePorts]);
+    }, [toastContext, setAvailablePorts]);
 
     // Runs on mount
     useEffect(() => {
         const onError = (val: z.infer<typeof SerialErrorNotification>) => {
-            // TODO: Error toast here
-            console.log(`Error from handle: ${val}. Message: ${val.error}`);
+            toastContext.notify(
+                uuidv4(),
+                `Error from handle: ${handle}. Message: ${val.error}`,
+                ToastNotifyMode.ERROR);
         };
         const onDataReceived = (val: z.infer<typeof SerialDataReceivedNotification>) => {
             const newData = val.data;
@@ -128,8 +140,10 @@ function SerialCommPageImpl() {
             setSendingData("");
         }
         catch (ex) {
-            // TODO: Error toast here
-            console.log(`Error writing to port: ${handle}. ${ex}`);
+            toastContext.notify(
+                uuidv4(),
+                `Error writing to port: ${handle}. ${ex}`,
+                ToastNotifyMode.ERROR);
         }
     };
 
@@ -138,8 +152,10 @@ function SerialCommPageImpl() {
         setHandle((prev) => {
             if (prev !== SERIAL_PORT_HANDLE_UNINITIALIZED) {
                 invokeRpc('ipc-closePort', { handle: prev }).catch((reason) => {
-                    // TODO: Error toast here
-                    console.log(`Error closing port: ${reason}`);
+                    toastContext.notify(
+                        uuidv4(),
+                        `Error closing port: ${reason}`,
+                        ToastNotifyMode.ERROR);
                 });
                 return SERIAL_PORT_HANDLE_UNINITIALIZED;
             }
@@ -167,8 +183,10 @@ function SerialCommPageImpl() {
               });
           }
           catch (ex) {
-              // TODO: Error toast here
-              console.log(`Error opening port: ${handle}. ${ex}`);
+              toastContext.notify(
+                uuidv4(),
+                `Error opening port: ${handle}. ${ex}`,
+                ToastNotifyMode.ERROR);
           }
           setInProcessOfOpeningPort(false);
         };
@@ -183,6 +201,8 @@ function SerialCommPageImpl() {
             return true;
         });
     };
+
+    const i: number = "";
 
     const isConnected = handle !== SERIAL_PORT_HANDLE_UNINITIALIZED;
 
