@@ -88,7 +88,7 @@ const createWindow = async () => {
       mainWindow.show();
     }
     const myApp = new MyApp();
-    myApp.setupEventHandlers();
+    myApp.setupEventHandlers(mainWindow);
     mainWindow.on('closed', () => {
       myApp.onAppClosing();
     });

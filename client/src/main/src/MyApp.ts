@@ -2,8 +2,9 @@ import { SERIAL_PORT_HANDLE_UNINITIALIZED } from "../../shared/src/ipc/clientToS
 import { handleRpc } from "./rpc/handleRpc";
 import { sleepNodejs } from "./utils/sleep.util";
 import { v4 as uuidv4 } from 'uuid';
-import { invokeRpc } from "./rpc/invokeRpc";
+import { emitNotification } from "./rpc/emitNotification";
 import { createHash } from 'crypto';
+import { BrowserWindow } from "electron";
 
 // This is mock state management for a handle.
 // When using the real Rust implementation, the state behind
@@ -44,7 +45,7 @@ export class MyApp {
 
     // I the meantime I've implemented dummy handlers.
     // TODO: Call the Rust gRPC microservice to perform actual serial communication.
-    public setupEventHandlers(): void {
+    public setupEventHandlers(browserWindow: BrowserWindow): void {
         handleRpc('ipc-listSerialPorts', async () => {
             await sleepNodejs(2_000);
             return ["COM3", "COM4"];
@@ -85,13 +86,15 @@ export class MyApp {
                     const dataSize = parseInt(hash.substring(0, 2), 16) % 11; // Deterministic size [0, 10] based on hash
                     // Use that same random-deterministic hash to generate the random data for the array.
                     const data = Array.from({length: dataSize}, (_, i) => parseInt(hash.substring(i*2, i*2 + 2), 16) % 256);
-                    invokeRpc('notify-serialDataReceived', {
+                    emitNotification(browserWindow,
+                        'notify-serialDataReceived', {
                         handle: handleCopy,
                         data: new Uint8Array(data), // Convert to Uint8Array
                     });
                 } else {
                     // Simulate serial port error
-                    invokeRpc('notify-serialError', {
+                    emitNotification(browserWindow,
+                        'notify-serialError', {
                         handle: handleCopy,
                         error: "Serial port disconnected",
                     });

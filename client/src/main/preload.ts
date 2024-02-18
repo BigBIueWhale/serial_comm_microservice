@@ -9,7 +9,7 @@ const electronHandler = {
     invoke(channel: ChannelsClientToServer, arg: string): Promise<string> {
       return ipcRenderer.invoke(channel, arg);
     },
-    onNotification(channel: ChannelsServerToClient, func: (event: Electron.IpcRendererEvent, ...args: any[]) => void) {
+    onNotification(channel: ChannelsServerToClient, func: (event: Electron.IpcRendererEvent, arg: string) => void) {
       ipcRenderer.on(channel, func);
     },
   },
