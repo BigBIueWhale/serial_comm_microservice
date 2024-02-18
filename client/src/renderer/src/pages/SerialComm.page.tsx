@@ -202,8 +202,6 @@ function SerialCommPageImpl() {
         });
     };
 
-    const i: number = "";
-
     const isConnected = handle !== SERIAL_PORT_HANDLE_UNINITIALIZED;
 
     return (
