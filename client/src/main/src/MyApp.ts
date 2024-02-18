@@ -49,9 +49,28 @@ export class MyApp {
         }
     }
 
+    Reset = (): void => {
+        removeHandler("ipc-cleanup");
+        removeHandler("ipc-listSerialPorts")
+        removeHandler("ipc-openPort");
+        removeHandler("ipc-closePort");
+        removeHandler("ipc-startReading");
+        removeHandler("ipc-stopReading");
+        removeHandler("ipc-write");
+        removeHandler("ipc-read");
+
+        this.closeAllPorts();
+    }
+
     // I the meantime I've implemented dummy handlers.
     // TODO: Call the Rust gRPC microservice to perform actual serial communication.
+    //
     public setupEventHandlers(browserWindow: BrowserWindow): void {
+        // This call is required for when the renderer window reloads
+        // in which case .on('ready-to-show') will trigger again,
+        // without .on('closed') triggering first.
+        this.Reset();
+
         handleRpc('ipc-cleanup', async () => {
             this.closeAllPorts();
         });
@@ -144,15 +163,6 @@ export class MyApp {
     public onAppClosing(): void {
         // Close any resources here
 
-        removeHandler("ipc-cleanup");
-        removeHandler("ipc-listSerialPorts")
-        removeHandler("ipc-openPort");
-        removeHandler("ipc-closePort");
-        removeHandler("ipc-startReading");
-        removeHandler("ipc-stopReading");
-        removeHandler("ipc-write");
-        removeHandler("ipc-read");
-
-        this.closeAllPorts();
+        this.Reset();
     }
 }

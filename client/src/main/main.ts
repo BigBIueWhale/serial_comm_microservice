@@ -78,6 +78,7 @@ const createWindow = async () => {
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
+  const myApp = new MyApp();
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
@@ -87,14 +88,10 @@ const createWindow = async () => {
     } else {
       mainWindow.show();
     }
-    const myApp = new MyApp();
     myApp.setupEventHandlers(mainWindow);
     mainWindow.on('closed', () => {
       myApp.onAppClosing();
     });
-    mainWindow.on('session-end', () => {
-      console.log(`Session endddddddddddddddd`);
-    })
   });
 
   mainWindow.on('closed', () => {
