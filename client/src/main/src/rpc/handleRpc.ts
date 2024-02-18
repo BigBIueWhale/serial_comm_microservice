@@ -25,3 +25,9 @@ export async function handleRpc<K extends keyof ApiClientToServer>(
       return superjson.stringify(validatedResult);
     });
   }
+
+export async function removeHandler<K extends keyof ApiClientToServer>(
+    channel: K,
+  ) {
+    ipcMain.removeHandler(channel);
+  }

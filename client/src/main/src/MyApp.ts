@@ -1,5 +1,5 @@
 import { SERIAL_PORT_HANDLE_UNINITIALIZED } from "../../shared/src/ipc/clientToServer";
-import { handleRpc } from "./rpc/handleRpc";
+import { handleRpc, removeHandler } from "./rpc/handleRpc";
 import { sleepNodejs } from "./utils/sleep.util";
 import { v4 as uuidv4 } from 'uuid';
 import { emitNotification } from "./rpc/emitNotification";
@@ -134,7 +134,13 @@ export class MyApp {
     public onAppClosing(): void {
         // Close any resources here
 
-        // TODO: removeHandler for each of the RPCs here
+        removeHandler("ipc-listSerialPorts")
+        removeHandler("ipc-openPort");
+        removeHandler("ipc-closePort");
+        removeHandler("ipc-startReading");
+        removeHandler("ipc-stopReading");
+        removeHandler("ipc-write");
+        removeHandler("ipc-read");
 
         for (const kvp of this.mock_handles) {
             closePort(this.mock_handles, kvp[0]);
