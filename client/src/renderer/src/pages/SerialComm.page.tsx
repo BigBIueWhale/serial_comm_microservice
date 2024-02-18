@@ -32,6 +32,8 @@ export function SerialCommPage() {
 
     // Handle to the open serial port
     const [handle, setHandle] = useState<z.infer<typeof SerialPortHandle>>(SERIAL_PORT_HANDLE_UNINITIALIZED);
+    // TODO: How to close this handle when the component unmounts so that the serial port
+    // doesn't stay open?
 
     // Runs on mount
     useEffect(() => {
@@ -108,10 +110,10 @@ export function SerialCommPage() {
                     baudRate: Number.parseInt(baudRate)
                 }
             });
+            setHandle(newHandle);
             await invokeRpc('ipc-startReading', {
                 handle: newHandle,
             });
-            setHandle(newHandle);
         }
         catch (ex) {
             // TODO: Error toast here

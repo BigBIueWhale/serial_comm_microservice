@@ -131,5 +131,10 @@ export class MyApp {
     public onAppClosing(): void {
         // Close any resources here
 
+        // TODO: removeHandler for each of the RPCs here
+
+        for (const kvp of this.mock_handles) {
+            closePort(this.mock_handles, kvp[0]);
+        }
     }
 }
