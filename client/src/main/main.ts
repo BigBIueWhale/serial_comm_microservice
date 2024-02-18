@@ -92,6 +92,9 @@ const createWindow = async () => {
     mainWindow.on('closed', () => {
       myApp.onAppClosing();
     });
+    mainWindow.on('session-end', () => {
+      console.log(`Session endddddddddddddddd`);
+    })
   });
 
   mainWindow.on('closed', () => {

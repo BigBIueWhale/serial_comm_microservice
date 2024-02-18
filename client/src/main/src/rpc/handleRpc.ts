@@ -7,7 +7,7 @@ import { ApiClientToServer, apiSchemas } from '../../../shared/src/ipc/clientToS
 import superjson from "superjson";
 import { ipcMain } from 'electron';
 
-export async function handleRpc<K extends keyof ApiClientToServer>(
+export function handleRpc<K extends keyof ApiClientToServer>(
     channel: K,
     handler: (arg: ApiClientToServer[K]['request']) => Promise<ApiClientToServer[K]['response']>
   ) {
@@ -26,7 +26,7 @@ export async function handleRpc<K extends keyof ApiClientToServer>(
     });
   }
 
-export async function removeHandler<K extends keyof ApiClientToServer>(
+export function removeHandler<K extends keyof ApiClientToServer>(
     channel: K,
   ) {
     ipcMain.removeHandler(channel);
